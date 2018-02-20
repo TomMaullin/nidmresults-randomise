@@ -1,5 +1,5 @@
 
-# NIDM-Results for FSL
+# NIDM-Results for FSL Randomise
 
 [![Build Status](https://travis-ci.org/incf-nidash/nidmresults-fsl.svg?branch=master)](https://travis-ci.org/incf-nidash/nidmresults-fsl)
 
