@@ -20,7 +20,21 @@ def getNeuroimagingAnalysisSoftware_softwareVersion(randomisedir):
 
     return(versionNumber)
 
-gfeatdir = '/home/tommaullin/Downloads/level2.gfeat'
+def getData_grandMeanScaling(randomisedir):
+
+    #We always grand mean scale.
+    return(True)
+
+def getData_targetIntensity(randomisedir):
+
+    #Always 10000.0
+    return(10000.0)
+
+
+gfeatdir = '/home/tommaullin/Documents.gfeat'
 
 print(getNeuroImagingAnalysisSoftwareType(gfeatdir))
 print(getNeuroimagingAnalysisSoftware_softwareVersion(gfeatdir))
+print(getData_grandMeanScaling(gfeatdir))
+print(getData_targetIntensity(gfeatdir))
+
