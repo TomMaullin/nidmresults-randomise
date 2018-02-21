@@ -40,7 +40,22 @@ def getDesignMatrix_atLocation(randomisedir):
                 
     return(output_filename)
 
-gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2.gfeat'
+def getData_grandMeanScaling(randomisedir):
+
+    #We always grand mean scale.
+    return(True)
+
+def getData_targetIntensity(randomisedir):
+
+    #Always 10000.0
+    return(10000.0)
+
+
+gfeatdir = '/home/tommaullin/Documents.gfeat'
+#gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2.gfeat'
+
 print(getNeuroImagingAnalysisSoftwareType(gfeatdir))
 print(getNeuroimagingAnalysisSoftware_softwareVersion(gfeatdir))
 print(getDesignMatrix_atLocation(gfeatdir))
+print(getData_grandMeanScaling(gfeatdir))
+print(getData_targetIntensity(gfeatdir))
