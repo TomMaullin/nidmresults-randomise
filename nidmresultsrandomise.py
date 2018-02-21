@@ -15,6 +15,8 @@
 
 import os
 import nibabel as nib
+import json
+import numpy as np
 
 def getNeuroImagingAnalysisSoftwareType(randomisedir):
     return('scr_FSL')
@@ -158,8 +160,96 @@ def getCoordinateSpace_voxelUnits(randomisedir):
     #Otherwise there will just be two (xyz and t).
     else:
         return([header.get_xyzt_units()[0]]*3)
+        
+#==============================================================================
+# Get contrast information.
+#==============================================================================
 
-gfeatdir = '/home/tommaullin/Documents.gfeat'
+#def getStatisticMap_contrastName(randomisedir, contrastNum):
+    
+def getStatisticMap_contrastName(randomisedir):
+    
+    #T-Stats first.
+    
+    desConFile = os.path.join(randomisedir, 'design.con')
+    
+    conNameList = []
+    #Get list of contrast names
+    with open(desConFile, 'r') as dcFile:
+        
+        for line in dcFile:
+            
+            if '/ContrastName' in line:
+                
+                conNameList.append(line.split('\t', 1)[1].replace('\n', '').strip())
+                
+    numOfTCons = len(conNameList)
+                
+    #Then F-Stats.
+    desFsfFile = os.path.join(randomisedir, 'design.fsf')
+    
+    #Get list of contrast names
+    with open(desFsfFile, 'r') as dfFile:
+        
+        numOfFCons = 0
+        nextLine = False
+        for line in dfFile:
+            
+            if 'fmri(nftests_real)' in line:
+                
+                numOfFCons = line.split(' ')[2]
+                numOfFCons = int(numOfFCons.replace('\n', ''))
+                break
+                
+        print(numOfFCons)
+        FConMat = np.array([[0]*numOfTCons]*numOfFCons)
+        
+        rowInd = -1
+        colInd = -1
+        
+        for line in dfFile:
+           
+            if nextLine:
+                
+                FConMat[rowInd, colInd] = int(line.split(' ')[-1].replace('\n', ''))
+                nextLine = False
+                
+            if 'F-test' in line and 'element' in line:
+               
+               splitLineArray = line.split(' ')
+               rowInd = int(splitLineArray[2])-1
+               colInd = int(splitLineArray[4].replace('\n', ''))-1
+               nextLine = True
+        
+        print(FConMat)
+        
+    return(conNameList)
+    
+def getContrastWeightMatrix_value(randomisedir):
+    
+    desConFile = os.path.join(randomisedir, 'design.con')
+
+    #Get list of T contrast vectors
+    with open(desConFile, 'r') as dcFile:
+        
+        insideMatrix = False
+        
+        conValList = []
+        for line in dcFile:
+            
+            if insideMatrix:
+                
+                conValList.append('[' + line.replace('\n', '').strip() + ']')
+            
+            if '/Matrix' in line:
+                
+                insideMatrix = True
+                
+    return(conValList)
+    
+#def get
+
+gfeatdir = '/home/tommaullin/Documents/temp3+++.gfeat'
 #gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2.gfeat'
 
-print(getCoordinateSpace_voxelUnits(gfeatdir))
+print(getStatisticMap_contrastName(gfeatdir))
