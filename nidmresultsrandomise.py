@@ -1,6 +1,7 @@
 import os
 import glob
 import nibabel as nib
+import json
 
 def getNeuroImagingAnalysisSoftwareType(randomisedir):
     return('scr_FSL')
@@ -77,11 +78,7 @@ def getParameterEstimateMaps(randomisedir):
 
     return(pe_maps)
 
-def getCoordinateSpace_voxelUnits(randomisedir):
-    mask = nib.load(os.path.join(randomisedir, 'mask.nii.gz'))
-    header = mask.header
-    print(header)
-    
+
 
 #gfeatdir = '/home/tommaullin/Documents.gfeat'
 gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2+.gfeat'
@@ -93,4 +90,3 @@ gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2+.gfeat'
 #print(getDesignMatrix_atLocation(gfeatdir))
 #print(getDesignMatrix_regressorNames(gfeatdir))
 #print(getParameterEstimateMaps(gfeatdir))
-print(getCoordinateSpace_voxelUnits(gfeatdir))
