@@ -14,6 +14,7 @@
 #
 
 import os
+import glob
 import nibabel as nib
 import json
 import numpy as np
@@ -38,6 +39,16 @@ def getNeuroimagingAnalysisSoftware_softwareVersion(randomisedir):
 
     return(versionNumber)
 
+def getData_grandMeanScaling(randomisedir):
+
+    #We always grand mean scale.
+    return(True)
+
+def getData_targetIntensity(randomisedir):
+
+    #Always 10000.0
+    return(10000.0)
+
 def getDesignMatrix_atLocation(randomisedir):
     output_filename = './DesignMatrix.csv'
     #Read in design.mat file
@@ -58,15 +69,30 @@ def getDesignMatrix_atLocation(randomisedir):
                 
     return(output_filename)
 
-def getData_grandMeanScaling(randomisedir):
+def getDesignMatrix_regressorNames(randomisedir):
+    regressorNames = []
+    #Read in design.fsf file
+    design_fsl_file = os.path.join(randomisedir,
+                                   'design.fsf')
 
-    #We always grand mean scale.
-    return(True)
+    with open(design_fsl_file, 'r') as input_file:
+        lines = input_file.readlines()
 
-def getData_targetIntensity(randomisedir):
+    for line in lines:
+        if "evtitle" in line:
+            split_line = line.split('"')
+            regressorNames.append(split_line[1])
 
-    #Always 10000.0
-    return(10000.0)
+    return(regressorNames)
+
+def getParameterEstimateMaps(randomisedir):
+    if os.path.isdir(os.path.join(randomisedir, 'cope1.feat')) is True: 
+        pe_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
+        pe_maps = glob.glob(os.path.join(pe_dir,'pe*.nii.gz'))
+    else:
+        pe_maps = []
+
+    return(pe_maps)
     
 def getErrorModel_hasErrorDistribution(randomisedir):
     
@@ -200,8 +226,7 @@ def getStatisticMap_contrastName(randomisedir):
                 numOfFCons = line.split(' ')[2]
                 numOfFCons = int(numOfFCons.replace('\n', ''))
                 break
-                
-        print(numOfFCons)
+           
         FConMat = np.array([[0]*numOfTCons]*numOfFCons)
         
         rowInd = -1
@@ -222,6 +247,13 @@ def getStatisticMap_contrastName(randomisedir):
                nextLine = True
         
         print(FConMat)
+        
+        #TODO - change matrix into names
+        #e.g.
+        #
+        # [[1 0],             ['c1',
+        #  [0 1],     ---->    'c2',
+        #  [1 1]]              'c1 & c2']
         
     return(conNameList)
     
