@@ -3,20 +3,23 @@
 #
 # =============================================================================
 #
-# Fields that could not be filled:
+# Fields that could not be filled as they do not exist for randomise:
 #
 # - ErrorModel_hasErrorDependence
 # - ErrorModel_dependenceMapWiseDependence
 # - ResidualMeanSquaresMap_atLocation (Although we have coded for the case that
 #   the _glm_sigma_sqr map has been saved in the stats directory)
+# - PeakDefinitionCriteria_maxNumberOfPeaksPerCluster
 #
 # =============================================================================
 #
+# Authors: Tom Maullin, Alex Bowring
+#
+# =============================================================================
 
 import os
 import glob
 import nibabel as nib
-import json
 import numpy as np
 
 def getNeuroImagingAnalysisSoftwareType(randomisedir):
@@ -295,9 +298,63 @@ def getStatisticMap_atLocation(randomisedir):
     statisticMapList = tstats + fstats
 
     return(statisticMapList)
+    
+def getClusterDefinitionCriteria_hasConnectivityCriterion(randomisedir):
+    
+    feat4_post_log = os.path.join(randomisedir, 'cope1.feat', 'logs', 'feat4_post')
+    
+    with open(feat4_post_log) as f4pl:
+        
+        for line in f4pl:
+            
+            if 'connectivity' in line:
+                
+                inputsInLine = line.split(' ')
+                break
+    
+    conCrit = -1
+    
+    for lineElement in inputsInLine:
+            
+        if 'connectivity' in lineElement:
+            
+            conCrit = lineElement.split('=')[1]
+            
+    return(conCrit)
+    
+def getPeakDefinitionCriteria_minDistanceBetweenPeaks(randomisedir):
+    
+    #This option doesn't exist in FSL. 
+    return(0.0)
 
-#gfeatdir = '/home/tommaullin/Documents/temp3+++.gfeat'
-gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2+.gfeat'
+def getContrastMap_atLocation(randomisedir):
+    
+    stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
+    copes = glob.glob(os.path.join(stat_dir, 'cope*'))
 
-print(getStatisticMap_statisticType(gfeatdir))
+    return(copes)
+    
+def getContrastStandardErrorMap_atLocation(randomisedir):
+    
+    stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
+    copeVARs = glob.glob(os.path.join(stat_dir, 'varcope*'))
+
+    return(copeSEs)
+
+# =============================================================================
+# Get inference information
+# =============================================================================
+    
+#def getExtentThreshold_clusterSizeInResels(randomisedir):
+#    
+#    #only set if nidm_ExtentThreshold/prov:type is “obo_statistic"
+#    desFsfFile = os.path.join(randomisedir, 'design.fsf')
+    
+    
+    
+
+gfeatdir = '/home/tommaullin/Documents/temp3+++.gfeat'
+#gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2+.gfeat'
+
+print(getContrastMap_atLocation(gfeatdir))
 print(getStatisticMap_atLocation(gfeatdir))
