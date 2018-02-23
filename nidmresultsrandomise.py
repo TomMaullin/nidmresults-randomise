@@ -245,16 +245,15 @@ def getStatisticMap_contrastName(randomisedir):
                rowInd = int(splitLineArray[2])-1
                colInd = int(splitLineArray[4].replace('\n', ''))-1
                nextLine = True
-        
-        print(FConMat)
-        
-        #TODO - change matrix into names
-        #e.g.
-        #
-        # [[1 0],             ['c1',
-        #  [0 1],     ---->    'c2',
-        #  [1 1]]              'c1 & c2']
-        
+
+        for i in range(len(FConMat)):
+            FConName = ""
+            for j in range(len(FConMat[i])):
+                if FConMat[i][j] == 1:
+                    FConName += 'C' + str(j+1) + ' & '
+            FConName = FConName[:-3]
+            conNameList.append(FConName)
+
     return(conNameList)
     
 def getContrastWeightMatrix_value(randomisedir):
@@ -278,10 +277,27 @@ def getContrastWeightMatrix_value(randomisedir):
                 insideMatrix = True
                 
     return(conValList)
-    
-#def get
 
-gfeatdir = '/home/tommaullin/Documents/temp3+++.gfeat'
-#gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2.gfeat'
+def getStatisticMap_statisticType(randomisedir):
+    stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
+    tstats = glob.glob(os.path.join(stat_dir, 'tstat*'))
+    tstats = ["obo_TStatistic"]*len(tstats)
+    fstats  = glob.glob(os.path.join(stat_dir,'fstat*'))
+    fstats   = ["obo_FStatistic"]*len(fstats)
+    statisticTypeList = tstats + fstats
 
-print(getStatisticMap_contrastName(gfeatdir))
+    return(statisticTypeList)
+
+def getStatisticMap_atLocation(randomisedir):
+    stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
+    tstats = glob.glob(os.path.join(stat_dir, 'tstat*'))
+    fstats  = glob.glob(os.path.join(stat_dir,'fstat*'))
+    statisticMapList = tstats + fstats
+
+    return(statisticMapList)
+
+#gfeatdir = '/home/tommaullin/Documents/temp3+++.gfeat'
+gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2+.gfeat'
+
+print(getStatisticMap_statisticType(gfeatdir))
+print(getStatisticMap_atLocation(gfeatdir))
