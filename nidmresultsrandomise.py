@@ -268,24 +268,76 @@ def getContrastWeightMatrix_value(randomisedir):
         
         insideMatrix = False
         
-        conValList = []
+        TconValList = []
         for line in dcFile:
             
             if insideMatrix:
                 
-                conValList.append('[' + line.replace('\n', '').strip() + ']')
+                formattedLine = line.replace('\n', '').strip().split(' ')
+                numericalEntries = [
+                    float(formattedLine[i]) for i in range(len(formattedLine))]
+                TconValList.append(numericalEntries)
             
             if '/Matrix' in line:
                 
                 insideMatrix = True
+    
+    # Now F contrast vectors.
+    numOfTCons = len(TconValList)
+    desFsfFile = os.path.join(randomisedir, 'design.fsf')
+    
+    #Get list of contrast names
+    with open(desFsfFile, 'r') as dfFile:
+        
+        numOfFCons = 0
+        nextLine = False
+        for line in dfFile:
+            
+            if 'fmri(nftests_real)' in line:
                 
+                numOfFCons = line.split(' ')[2]
+                numOfFCons = int(numOfFCons.replace('\n', ''))
+                break
+           
+        FConMat = np.array([[0]*numOfTCons]*numOfFCons)
+        
+        rowInd = -1
+        colInd = -1
+        
+        for line in dfFile:
+           
+            if nextLine:
+                
+                FConMat[rowInd, colInd] = int(line.split(' ')[-1].replace('\n', ''))
+                nextLine = False
+                
+            if 'F-test' in line and 'element' in line:
+               
+               splitLineArray = line.split(' ')
+               rowInd = int(splitLineArray[2])-1
+               colInd = int(splitLineArray[4].replace('\n', ''))-1
+               nextLine = True
+    
+    FconValList = []
+    # Convert the Fcon matrix into the F contrasts.
+    for i in range(numOfFCons):
+        
+        currentFCon = []
+        for j in range(numOfTCons):
+            if FConMat[i, j]==1:
+                currentFCon.append(TconValList[j])
+                
+        FconValList.append(currentFCon)
+        
+    conValList = TconValList + FconValList
+    
     return(conValList)
 
 def getStatisticMap_statisticType(randomisedir):
     stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
-    tstats = glob.glob(os.path.join(stat_dir, 'tstat*'))
+    tstats = sorted(glob.glob(os.path.join(stat_dir, 'tstat*')))
     tstats = ["obo_TStatistic"]*len(tstats)
-    fstats  = glob.glob(os.path.join(stat_dir,'fstat*'))
+    fstats  = sorted(glob.glob(os.path.join(stat_dir,'fstat*')))
     fstats   = ["obo_FStatistic"]*len(fstats)
     statisticTypeList = tstats + fstats
 
@@ -293,8 +345,8 @@ def getStatisticMap_statisticType(randomisedir):
 
 def getStatisticMap_atLocation(randomisedir):
     stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
-    tstats = glob.glob(os.path.join(stat_dir, 'tstat*'))
-    fstats  = glob.glob(os.path.join(stat_dir,'fstat*'))
+    tstats = sorted(glob.glob(os.path.join(stat_dir, 'tstat*')))
+    fstats  = sorted(glob.glob(os.path.join(stat_dir,'fstat*')))
     statisticMapList = tstats + fstats
 
     return(statisticMapList)
@@ -330,17 +382,48 @@ def getPeakDefinitionCriteria_minDistanceBetweenPeaks(randomisedir):
 def getContrastMap_atLocation(randomisedir):
     
     stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
-    copes = glob.glob(os.path.join(stat_dir, 'cope*'))
+    copes = sorted(glob.glob(os.path.join(stat_dir, 'cope*')))
 
     return(copes)
     
 def getContrastStandardErrorMap_atLocation(randomisedir):
     
     stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
-    copeVARs = glob.glob(os.path.join(stat_dir, 'varcope*'))
+    copeVars = sorted(glob.glob(os.path.join(stat_dir, 'varcope*')))
+    
+    for i in range(len(copeVars)):
+        
+        # Read in the image.
+        imobj = nib.load(copeVars[i], mmap=False)
+        
+        # display header object
+        imhdr = imobj.header
+        
+        # extract data (as an numpy array)
+        imdat = imobj.get_data().astype(float)
+        
+        #Record the standard errors.
+        newdata = np.sqrt(imdat)
+        newhdr = imhdr.copy()
+        newobj = nib.nifti1.Nifti1Image(newdata, None, header=newhdr)
+        nib.save(newobj, "copeSE" + str(i+1) + ".nii.gz")
 
-    return(copeSEs)
-
+    return(["copeSE" + str(i+1) + ".nii.gz" for i in range(len(copeVars))])
+    
+def getStatisticMap_effectDegreesOfFreedom(randomisedir):
+    
+    statTypes = getStatisticMap_statisticType(randomisedir)
+    conVectors = getContrastWeightMatrix_value(randomisedir)
+    
+    erdf = ['']*len(statTypes)
+    for i in range(len(conVectors)):
+        
+        if statTypes[i] != 'obo_TStatistic':
+            
+            erdf[i] = np.linalg.matrix_rank(np.array(conVectors[i]))
+            
+    return(erdf)
+    
 # =============================================================================
 # Get inference information
 # =============================================================================
@@ -350,11 +433,22 @@ def getContrastStandardErrorMap_atLocation(randomisedir):
 #    #only set if nidm_ExtentThreshold/prov:type is “obo_statistic"
 #    desFsfFile = os.path.join(randomisedir, 'design.fsf')
     
+
+def getSearchSpaceMaskMap_atLocation(randomisedir):
     
+    return(os.path.join(
+            randomisedir, 'mask.nii.gz'))
+    
+def getExcursionSetMap_atLocation(randomisedir):
+    
+    cope_dir = os.path.join(randomisedir, 'cope1.feat')
+    tstats = sorted(glob.glob(os.path.join(cope_dir, 'thresh_zstat*.nii.gz')))
+    fstats  = sorted(glob.glob(os.path.join(cope_dir,'thresh_zfstat*.nii.gz')))
+    
+    return(tstats + fstats)
     
 
 gfeatdir = '/home/tommaullin/Documents/temp3+++.gfeat'
 #gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2+.gfeat'
 
-print(getContrastMap_atLocation(gfeatdir))
-print(getStatisticMap_atLocation(gfeatdir))
+print(getExcursionSetMap_atLocation(gfeatdir))
