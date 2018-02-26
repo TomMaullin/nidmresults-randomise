@@ -101,38 +101,13 @@ def getErrorModel_hasErrorDistribution(randomisedir):
     
     #Always normal
     return('obo_NormalDistribution')
-    
-def getGrandMeanMap_atLocation(randomisedir):
-    
-    return(os.path.join(
-            randomisedir, 'mean_func.nii.gz'))
-    
-def getMaskMap_atLocation(randomisedir):
-    
-    return(os.path.join(
-            randomisedir, 'mask.nii.gz'))
 
-def getCoordinateSpace_inWorldCoordinateSystem(randomisedir):
-    
-    #This is only for group level and therefore we can't get more specific
-    # detail on registration.
-    
-    n = nib.load(os.path.join(
-            randomisedir, 'mean_func.nii.gz'))
-    header = n.header
-    
-    if header['qform_code'] == 4:
-        return('MNICoordinateSystem')
-    elif header['qform_code'] == 3:
-        return('TalairachCoordinateSystem')
-    else:
-        return('CustomCoordinateSystem')
         
 def getErrorModel_errorVarianceHomogeneous(randomisedir):
     
     #The error model is always homogeneous for randomise.
     return(True)
-    
+
 def getErrorModel_varianceMapWiseDependence(randomisedir):
     
     #The variance is estimated per voxel.
@@ -142,7 +117,7 @@ def getModelParameterEstimation_withEstimationMethod(randomisedir):
     
     #This is always OLS
     return('obo_OrdinaryLeastSquaresEstimation')
-    
+
 def getResidualMeanSquaresMap_atLocation(randomisedir):
     
     stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
@@ -172,6 +147,33 @@ def getResidualMeanSquaresMap_atLocation(randomisedir):
         
     else:
         return('')
+    
+def getGrandMeanMap_atLocation(randomisedir):
+    
+    return(os.path.join(
+            randomisedir, 'mean_func.nii.gz'))
+    
+def getMaskMap_atLocation(randomisedir):
+    
+    return(os.path.join(
+            randomisedir, 'mask.nii.gz'))
+
+def getCoordinateSpace_inWorldCoordinateSystem(randomisedir):
+    
+    #This is only for group level and therefore we can't get more specific
+    # detail on registration.
+    
+    n = nib.load(os.path.join(
+            randomisedir, 'mean_func.nii.gz'))
+    header = n.header
+    
+    if header['qform_code'] == 4:
+        return('MNICoordinateSystem')
+    elif header['qform_code'] == 3:
+        return('TalairachCoordinateSystem')
+    else:
+        return('CustomCoordinateSystem')
+
         
 def getCoordinateSpace_voxelUnits(randomisedir):
     
@@ -298,6 +300,13 @@ def getStatisticMap_atLocation(randomisedir):
     statisticMapList = tstats + fstats
 
     return(statisticMapList)
+
+def getContrastMap_atLocation(randomisedir):
+    
+    stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
+    copes = glob.glob(os.path.join(stat_dir, 'cope*'))
+
+    return(copes)
     
 def getClusterDefinitionCriteria_hasConnectivityCriterion(randomisedir):
     
@@ -326,13 +335,6 @@ def getPeakDefinitionCriteria_minDistanceBetweenPeaks(randomisedir):
     
     #This option doesn't exist in FSL. 
     return(0.0)
-
-def getContrastMap_atLocation(randomisedir):
-    
-    stat_dir = os.path.join(randomisedir, 'cope1.feat', 'stats')
-    copes = glob.glob(os.path.join(stat_dir, 'cope*'))
-
-    return(copes)
     
 def getContrastStandardErrorMap_atLocation(randomisedir):
     
@@ -340,6 +342,43 @@ def getContrastStandardErrorMap_atLocation(randomisedir):
     copeVARs = glob.glob(os.path.join(stat_dir, 'varcope*'))
 
     return(copeSEs)
+
+def statsticMap_errorDegreesofFreedom(randomisedir):
+    dof_file = os.path.join(randomisedir,
+                            'cope1.feat',
+                            'stats',
+                            'dof')
+    
+    with open(dof_file, 'r') as input_file:
+        dof = input_file.readline()
+        dof = dof.split('\n')[0]
+        
+    return(dof)
+
+def getHeightThreshold_type(randomisedir):
+    design_fsl_file = os.path.join(randomisedir,
+                                   'design.fsf')
+
+    with open(design_fsl_file, 'r') as input_file:
+        lines = input_file.readlines()
+
+    for line in lines:
+        if "fmri(thresh)" in line:
+            split_line = line.split(' ')
+            threshold_type = split_line[-1]
+            threshold_type = int(threshold_type.split('\n')[0])
+
+    if threshold_type == 1:
+        HeightThreshold = "nidm_PValueUncorrected"
+    if threshold_type == 2:
+        HeightThreshold = "obo_FWERAdjustedPValue"
+    if threshold_type == 3:
+        HeightThreshold = "obo_statistic"
+
+    return(HeightThreshold)
+
+def getInference_hasAlternativeHypothesis(randomisedir):
+    return("OneTailedTest")
 
 # =============================================================================
 # Get inference information
@@ -353,8 +392,6 @@ def getContrastStandardErrorMap_atLocation(randomisedir):
     
     
 
-gfeatdir = '/home/tommaullin/Documents/temp3+++.gfeat'
-#gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2+.gfeat'
+gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2_two_f_test.gfeat'
 
-print(getContrastMap_atLocation(gfeatdir))
-print(getStatisticMap_atLocation(gfeatdir))
+print(getInference_hasAlternativeHypothesis(gfeatdir))
