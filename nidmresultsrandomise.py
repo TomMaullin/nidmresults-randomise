@@ -423,6 +423,43 @@ def getStatisticMap_effectDegreesOfFreedom(randomisedir):
             erdf[i] = np.linalg.matrix_rank(np.array(conVectors[i]))
             
     return(erdf)
+
+def statsticMap_errorDegreesofFreedom(randomisedir):
+    dof_file = os.path.join(randomisedir,
+                            'cope1.feat',
+                            'stats',
+                            'dof')
+    
+    with open(dof_file, 'r') as input_file:
+        dof = input_file.readline()
+        dof = dof.split('\n')[0]
+        
+    return(dof)
+
+def getHeightThreshold_type(randomisedir):
+    design_fsl_file = os.path.join(randomisedir,
+                                   'design.fsf')
+
+    with open(design_fsl_file, 'r') as input_file:
+        lines = input_file.readlines()
+
+    for line in lines:
+        if "fmri(thresh)" in line:
+            split_line = line.split(' ')
+            threshold_type = split_line[-1]
+            threshold_type = int(threshold_type.split('\n')[0])
+
+    if threshold_type == 1:
+        HeightThreshold = "nidm_PValueUncorrected"
+    if threshold_type == 2:
+        HeightThreshold = "obo_FWERAdjustedPValue"
+    if threshold_type == 3:
+        HeightThreshold = "obo_statistic"
+
+    return(HeightThreshold)
+
+def getInference_hasAlternativeHypothesis(randomisedir):
+    return("OneTailedTest")
     
 # =============================================================================
 # Get inference information
@@ -446,7 +483,8 @@ def getExcursionSetMap_atLocation(randomisedir):
     fstats  = sorted(glob.glob(os.path.join(cope_dir,'thresh_zfstat*.nii.gz')))
     
     return(tstats + fstats)
-    
+
+
 
 gfeatdir = '/home/tommaullin/Documents/temp3+++.gfeat'
 #gfeatdir = '/Users/maullz/Desktop/pytreat_nidmrandomise/level2+.gfeat'
